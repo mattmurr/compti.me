@@ -4,15 +4,13 @@ description: Serverless Kotlin using AWS Lambda, API Gateway and CDK
 date: 2022-04-20
 ---
 
-Recently at work, I was tasked with creating an API written in Kotlin using AWS
-Lambda and API Gateway, I thought I\'d recreate and share the steps taken to
-achieve a similar outcome. In this post, I will be making a basic REST API and
-deploying it with AWS CDK.
+Recently at work, I built an API written in Kotlin, using AWS Lambda and API
+Gateway, I'm going to recreate the steps taken to achieve a similar outcome.
 
 You can find the finished code on the
 [GitHub repo](https://github.com/mattmurr/kotlin-cdk-apigw-lambda).
 
-## Setup
+## Project init
 
 Let's start by initializing a new project with Gradle:
 
@@ -62,9 +60,8 @@ BUILD SUCCESSFUL in 35s
 
 </details>
 
-I\'ll be deploying everything through AWS CDK, so it would be a reasonable time
-to initialize the CDK project; I have opted for TypeScript, the syntax is quick
-and easy to work with:
+We'll be deploying everything through AWS CDK, so let's initialize the CDK
+project too. I'm all for speed 🚀, so TypeScript is my choice here:
 
 <details><summary><code>cdk init -l typescript --generate-only</code></summary>
 
@@ -93,12 +90,13 @@ The `cdk.json` file tells the CDK Toolkit how to execute your app.
 
 </details>
 
-## Write some code
+## Kotlin prototyping
 
-We can use some AWS Java libraries and [Gson](https://github.com/google/gson),
-which provides an easy way to convert back and forth, JSON and objects.
-Additionally, I\'ve added the `buildZip` task, the app needs to be bundled into
-a zip file to create the Lambda function from, adapted from
+There are some AWS Java dependencies I used for Lambda, along with
+[Gson](https://github.com/google/gson), which is providing an easy way to
+convert back and forth, JSON and objects. Additionally, I've added the
+`buildZip` task, the app needs to be bundled into a zip file to create the
+Lambda function from, adapted from
 [AWS Lambda docs for Java](https://docs.aws.amazon.com/lambda/latest/dg/java-package.html):
 
 <details><summary><code>build.gradle.kts</code></summary>
@@ -141,14 +139,14 @@ tasks {
 
 Each Lambda has a handler, essentially an entry-point for the function which
 processes the events/invocations. Firstly, there is the `RequestHandler` class
-from which we can derive the Handler from. Since I\'ll be proxying all events
-from API Gateway to the Lambda, I will also import and use the provided,
+from which we can derive the Handler. Since I'll be proxying all events from API
+Gateway to our Lambda function, I will also import and use the provided,
 `APIGatewayProxyResponseEvent` and `APIGatewayProxyRequestEvent` classes.
-There\'s a single method within the `RequestHandler` named `handleRequest()`
+There's a single method within the `RequestHandler` named `handleRequest()`
 which can be overridden, the method takes an input/event, where we can use
 `APIGatewayProxyRequestEvent` as the type; the second parameter to this method
 is the `Context` which includes contextual information about the invoked Lambda
-such as it\'s name.
+such as it's name.
 
 <details><summary><code>app/src/main/kotlin/AddFive/Handler.kt</code></summary>
 
@@ -226,15 +224,15 @@ manifest.json
 tree.json
 ```
 
-The following command can be used to start a local server from which we can
-invoke the Lambda function we defined:
+The following command can be used to set up the Lambda function we defined
+locally:
 
 ```shell
 sam local start-lambda -t cdk/cdk.out/CdkStack.template.json
 ```
 
 Now we can invoke the function using the AWS CLI (, I always recommend checking
-out the `man`, `help` command or `--help` argument for a shell program):
+out the `man`, `help` command or `--help` argument for CLI apps):
 
 ```shell
 aws --endpoint-url http://localhost:3001 \
@@ -242,8 +240,7 @@ aws --endpoint-url http://localhost:3001 \
   --function-name AddFiveFuncFD7DFDB6 /tmp/out.log
 ```
 
-The function name can be found in the generated `<stack name>.template.json`
-file:
+The function name can be found in the output `<stack name>.template.json` file:
 
 <details><summary><code>less CdkStack.template.json</code></summary>
 
@@ -263,16 +260,20 @@ file:
 
 </details>
 
-If all has gone well, there should be a message in the logs, with some output in
-`/tmp/out.log`:
+Granted there are no issues, we should see the following in `/tmp/out.log`:
 
 `An operation is not implemented.: kotlin.NotImplementedError`
 
 The function executed and reached the `TODO()` line in the handler. We should
-add some real logic now; take an input, add 5, and respond with the result. We
-can use Gson here to parse the body field of the `APIGatewayProxyRequestEvent`
-(the request body) and furthermore, serialize my response object into a valid
-JSON string:
+add some real logic now.
+
+1. Take an input
+2. Add 5
+3. Respond with the result
+
+We can use Gson here to parse the body field of the
+`APIGatewayProxyRequestEvent` (the request body) and serialize the response
+object into a valid JSON string:
 
 <details><summary><code>app/src/kotlin/AddFive/Handler.kt</code></summary>
 
@@ -307,7 +308,9 @@ data class Response(
 
 </details>
 
-I\'ve added a Makefile to simplify and automate building and re-deploying:
+## Makefile
+
+I've added a Makefile to automate building and re-deploying:
 
 <details><summary><code>Makefile</code></summary>
 
@@ -345,8 +348,10 @@ CloudFormation and spins up the Lambda locally with AWS SAM:
 make local-lambda
 ```
 
-We can again use the AWS CLI to invoke the Lambda when it is ready, this time I
-expect to get a `200 OK` response and the result will be in `/tmp/out.log`:
+## Dev-testing
+
+Invoke the Lambda when it is ready locally, I'm expecting a `200 OK` response
+and the expected result should be in `/tmp/out.log`:
 
 ```shell
 aws --endpoint-url http://localhost:3001 \
@@ -407,8 +412,8 @@ the Makefile for this:
 make local-apigw
 ```
 
-Just make a request, using whatever client I want to use (I love using
-[httpie](https://httpie.io/)), the request should be something like this:
+Just make a request, using whichever tool you like. The request should be
+something like this:
 
 ```http
 POST http://localhost:3000 HTTP/1.1
@@ -419,14 +424,18 @@ content-type: application/json
 }
 ```
 
-We should get the `200 OK` response with the correct response body.
+We should get a `200 OK` response, along with the expected response body
+propagated through APIGW.
 
-With CDK, It\'s simple to deploy this to AWS, granted I\'ve already configured
-AWS CLI
-[docs.aws.amazon.com/cli](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html)
-and bootstrapped my AWS account for the region I want to deploy to, I can run
-`cdk deploy` to start the deployment, the Makefile includes a section that
-builds the project and initiates the deployment:
+## Up to the cloud
+
+With CDK, It's simple to deploy this to AWS. I've already configured AWS CLI
+([docs.aws.amazon.com/cli](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html))
+and bootstrapped my AWS account for the region I want to deploy to
+([docs.aws.amazon.com/cdk/v2/guide/bootstrapping.html](https://docs.aws.amazon.com/cdk/v2/guide/bootstrapping.html)).
+
+Run `cdk deploy` to start the deployment, our [Makefile](#makefile) includes a
+section that builds the project and initiates the deployment:
 
 ```shell
 make deploy
@@ -485,16 +494,17 @@ x-amzn-RequestId: 08470076-6a16-43a9-9216-0104d9056515
 
 </details>
 
-Nice! Serverless Kotlin. If you deployed this to AWS, don\'t forget to destroy
-the stack with `cdk destroy`, or you can head over to the CloudFormation service
-in the console, where you will find the stack in the region you deployed to.
+To avoid racking up unwanted Lambda invocations, don't forget to destroy the
+stack when you are finished, with `cdk destroy`, or by heading over to the
+CloudFormation service in the console, where you will find the stack in the
+region you deployed to.
 
-## There\'s a small problem
+## There's a small problem
 
-JVM-based Lambda functions suffer from slow cold-boots. In a situation where the
-API is expected to be called pretty infrequently, cold-boots are expected in
-most if not all occurrences. I will be addressing this in a follow-up post using
-GraalVM.
+JVM-based Lambda functions suffer from slow cold boots. In a situation where the
+API is expected to be called pretty infrequently, cold boots will occur in most
+if not all occurrences. I will be addressing this pitfall in a follow-up post
+about GraalVM.
 
 **Edit**: AWS has introduced a new feature called
 [SnapStart](https://aws.amazon.com/blogs/compute/reducing-java-cold-starts-on-aws-lambda-functions-with-snapstart/)

@@ -1,5 +1,6 @@
 html {
   height: 100%;
+  font-size: 120%;
 }
 
 body {
@@ -10,7 +11,7 @@ body {
   flex-direction: column;
 
   width: calc(100vw - 40px);
-  max-width: 760px;
+  max-width: 1024px;
   margin: 0 auto;
 }
 
@@ -120,5 +121,5 @@ code {
 }
 
 li:not(:last-child) {
-    margin-bottom: 5px;
+  margin-bottom: 5px;
 }

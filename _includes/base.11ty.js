@@ -38,10 +38,9 @@ exports.render = function({ site, content, page, title, description }) {
       </head>
       <body>
         <header>
-          <h1><a href="/">sociallyinept.dev</a></h1>
+          <h1><a href="/">compti.me</a></h1>
           <div>
             <a href="mailto:${site.social.email}">Email</a>
-            <a href="https://matrix.to/#/${site.social.matrix}">Matrix</a>
             <a href="https://github.com/${site.social.github}">GitHub</a>
           </div>
         </header>
