@@ -1,7 +1,7 @@
 ---
-title: "Activiti 7 BPM Spring Boot App"
-description: "Create your own BPM app with Spring Boot"
-date: "2022-11-26"
+title: "Bring BPM into your Spring Boot App for great tempo"
+description: "Activiti 7 BPM + Spring Boot + Apache Kafka"
+date: "2023-03-21"
 ---
 
 Starting off by creating a new spring-boot project. I'll be using the Spring
