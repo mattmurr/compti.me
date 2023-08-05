@@ -28,3 +28,4 @@ shortcuts to my script. <kbd>Command</kbd> + <kbd>P</kbd> would execute
 `alacritty -e sh -c '~/bin/fzf-passmenu'`, spawning a new terminal window and
 executing the script. Quick and easy password workflow.
 
+**Edit:** I now use a Bitwarden family setup.

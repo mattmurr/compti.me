@@ -42,10 +42,12 @@ exports.render = function({ site, content, page, title, description }) {
           <div>
             <a href="mailto:${site.social.email}">Email</a>
             <a href="https://github.com/${site.social.github}">GitHub</a>
+            <a href="${site.social.mastodon}">Mastodon</a>
           </div>
         </header>
         <main>${content}</main>
         <footer>&copy; 2021-${new Date().getFullYear()} Matthew Murray</footer>
       </body>
+      <script defer src="/_vercel/insights/script.js"></script>
     </html>`;
 };

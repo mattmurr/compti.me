@@ -1,6 +1,6 @@
 ---
 layout: home
-title: compti.me
+title: compti.me - a blog by matt
 ---
 
 Hey I'm Matt, a software development consultant in the UK. This is my blog where
