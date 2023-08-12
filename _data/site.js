@@ -9,7 +9,6 @@ module.exports = function() {
     social: {
       email: "quiet.art8266@fastmail.com",
       github: "mattmurr",
-      mastodon: "https://hachyderm.io/@mattmurr"
     }
   }
 }
