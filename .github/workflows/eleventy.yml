@@ -10,6 +10,8 @@ jobs:
         uses: TartanLlama/actions-eleventy@master
         env: 
           HASHNODE_TOKEN: ${{ secrets.HASHNODE_TOKEN }}
+        with:
+          install_dependencies: true
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
         with:
