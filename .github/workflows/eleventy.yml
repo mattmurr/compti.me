@@ -8,10 +8,10 @@ jobs:
       - uses: actions/checkout@master
       - name: Build
         uses: TartanLlama/actions-eleventy@master
-        env: 
-          HASHNODE_TOKEN: ${{ secrets.HASHNODE_TOKEN }}
         with:
           install_dependencies: true
+        env: 
+          HASHNODE_TOKEN: ${{ secrets.HASHNODE_TOKEN }}
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
         with:
