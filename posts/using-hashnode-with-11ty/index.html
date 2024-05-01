@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+    <html lang="en">
+      <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Integrating 11ty with Hashnode Headless CMS</title>
+        <meta property="og:title" content="Integrating 11ty with Hashnode Headless CMS" />
+        <meta name="description" content="Learn how to integrate 11ty with Hashnode Headless CMS for efficient, dynamic blog content management and seamless site performance" />
+        <meta property="og:description" content="Learn how to integrate 11ty with Hashnode Headless CMS for efficient, dynamic blog content management and seamless site performance" />
+        <link rel="canonical" href=https://blog.compti.me/posts/using-hashnode-with-11ty/ />
+        <link
+          rel="apple-touch-icon"
+          sizes="180x180"
+          href="/assets/apple-touch-icon.png"
+        />
+        <link
+          rel="icon"
+          type="image/png"
+          sizes="32x32"
+          href="/assets/favicon-32x32.png"
+        />
+        <link
+          rel="icon"
+          type="image/png"
+          sizes="16x16"
+          href="/assets/favicon-16x16.png"
+        />
+        <link rel="manifest" href="/assets/site.webmanifest" />
+        <link
+          rel="mask-icon"
+          href="/assets/safari-pinned-tab.svg"
+          color="#5bbad5"
+        />
+        <meta name="msapplication-TileColor" content="#da532c" />
+        <meta name="theme-color" content="#ffffff" />
+        <link rel="stylesheet" href="/assets/main.css" />
+        <link
+          rel="stylesheet"
+          href="https://unpkg.com/@highlightjs/cdn-assets@11.9.0/styles/monokai.min.css"
+        />
+        <script src="https://unpkg.com/@highlightjs/cdn-assets@11.9.0/highlight.min.js"></script>
+        <script>hljs.highlightAll();</script>
+      </head>
+      <body>
+        <header>
+          <h1><a href="/">compti.me</a></h1>
+          <div>
+            <a href="mailto:quiet.art8266@fastmail.com">Email</a>
+            <a href="https://github.com/mattmurr">GitHub</a>
+          </div>
+        </header>
+        <main><article>
+    <h2>Using Hashnode with 11ty</h2>
+    <h3>Using Hashnode as a content management system for 11ty/eleventy</h3>
+    <p>Eleventy is a simple but flexible static site generator that supports various templating languages. This allows developers to choose the best option for their project. It integrates well with different data sources, whether local markdown files or a content management system, whilst ensuring quick and efficient website performance.</p>
+<p>Hashnode can be used solely as a CMS (<a target="_blank" href="https://hashnode.com/headless">Hashnode Headless</a>), integrating with 11ty is straightforward; Using Hashnode to write and publish and 11ty to generate the blog using the GraphQL API.</p>
+<p>In 11ty, you can use data from various sources and transform those into content using templating system. You may want to get articles you created in Hashnode. Below is <code>hashnode.js</code> in the <code>_data</code> directory, it fetches published articles.</p>
+<pre><code class="lang-javascript"><span class="hljs-keyword">const</span> EleventyFetch = <span class="hljs-built_in">require</span>(<span class="hljs-string">"@11ty/eleventy-fetch"</span>)
+
+<span class="hljs-built_in">module</span>.exports = <span class="hljs-keyword">async</span> <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
+    <span class="hljs-keyword">var</span> result = <span class="hljs-keyword">await</span> fetchAPI(<span class="hljs-string">`
+    query($host: String!) {
+      publication(host: $host) {
+        posts(first: 0) {
+          edges {
+            node {
+              slug
+              title
+              content {
+                  html
+              }
+            }
+          }
+        }
+      }
+    }
+    `</span>, { <span class="hljs-attr">host</span>: <span class="hljs-string">'blog.compti.me'</span> }
+    );
+
+    <span class="hljs-keyword">return</span> result.data.publication.posts.edges.map(<span class="hljs-function">(<span class="hljs-params">{node}</span>) =&gt;</span> node)
+}
+
+<span class="hljs-keyword">async</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">fetchAPI</span>(<span class="hljs-params">query, variables = {}</span>) </span>{
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">await</span> EleventyFetch(<span class="hljs-string">"https://gql.hashnode.com"</span>, {
+        <span class="hljs-attr">type</span>: <span class="hljs-string">"json"</span>,
+        <span class="hljs-attr">duration</span>: <span class="hljs-string">"1m"</span>,
+        <span class="hljs-attr">fetchOptions</span>: {
+            <span class="hljs-attr">method</span>: <span class="hljs-string">"POST"</span>,
+            <span class="hljs-attr">headers</span>: {
+            <span class="hljs-string">"Content-Type"</span>: <span class="hljs-string">"application/json"</span>,
+            <span class="hljs-string">"Authorization"</span>: process.env.HASHNODE_TOKEN
+            },
+            <span class="hljs-attr">body</span>: <span class="hljs-built_in">JSON</span>.stringify({query, variables})
+        }
+    });
+}
+</code></pre>
+<p>These will now populate into global data, which can seemingly be accessed from anywhere. To generate individual pages for each post. I've created a template <code>posts.njk</code>, it includes some front matter for paginating the Hashnode data fetched from the API.</p>
+<pre><code class="lang-javascript">---
+pagination:
+  data: hashnode
+  <span class="hljs-attr">size</span>: <span class="hljs-number">1</span>
+  <span class="hljs-attr">alias</span>: post
+<span class="hljs-attr">permalink</span>: <span class="hljs-string">"posts/{{ post.slug }}/"</span>
+<span class="hljs-attr">layout</span>: layouts/base.njk
+<span class="hljs-attr">tags</span>: [
+    <span class="hljs-string">"posts"</span>
+]
+---
+
+<span class="xml"><span class="hljs-tag">&lt;<span class="hljs-name">h1</span>&gt;</span>{{post.title}}<span class="hljs-tag">&lt;/<span class="hljs-name">h1</span>&gt;</span></span>
+
+{{ post.content.html | safe }}
+</code></pre>
+<p>This is all it takes to start building a statically generated blog using 11ty/eleventy and Hashnode as a CMS.</p>
+<p>Integrating Hashnode as a CMS to your Eleventy site offers a seamless way to manage and display blog content dynamically. This integration not only simplifies content management, but allows you to make use of Hashnode's architecture while having complete control over the way your site looks and feels.</p>
+
+  </article></main>
+        <footer>&copy; 2021-2024 Matthew Murray</footer>
+      </body>
+    </html>

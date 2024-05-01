@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+    <html lang="en">
+      <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Vercel Edge Functions Overview</title>
+        <meta property="og:title" content="Vercel Edge Functions Overview" />
+        <meta name="description" content="Explore using Vercel's edge functions to add GitHub OAuth to an 11ty site, enhancing performance with serverless technology" />
+        <meta property="og:description" content="Explore using Vercel's edge functions to add GitHub OAuth to an 11ty site, enhancing performance with serverless technology" />
+        <link rel="canonical" href=https://blog.compti.me/posts/vercel-edge-functions/ />
+        <link
+          rel="apple-touch-icon"
+          sizes="180x180"
+          href="/assets/apple-touch-icon.png"
+        />
+        <link
+          rel="icon"
+          type="image/png"
+          sizes="32x32"
+          href="/assets/favicon-32x32.png"
+        />
+        <link
+          rel="icon"
+          type="image/png"
+          sizes="16x16"
+          href="/assets/favicon-16x16.png"
+        />
+        <link rel="manifest" href="/assets/site.webmanifest" />
+        <link
+          rel="mask-icon"
+          href="/assets/safari-pinned-tab.svg"
+          color="#5bbad5"
+        />
+        <meta name="msapplication-TileColor" content="#da532c" />
+        <meta name="theme-color" content="#ffffff" />
+        <link rel="stylesheet" href="/assets/main.css" />
+        <link
+          rel="stylesheet"
+          href="https://unpkg.com/@highlightjs/cdn-assets@11.9.0/styles/monokai.min.css"
+        />
+        <script src="https://unpkg.com/@highlightjs/cdn-assets@11.9.0/highlight.min.js"></script>
+        <script>hljs.highlightAll();</script>
+      </head>
+      <body>
+        <header>
+          <h1><a href="/">compti.me</a></h1>
+          <div>
+            <a href="mailto:quiet.art8266@fastmail.com">Email</a>
+            <a href="https://github.com/mattmurr">GitHub</a>
+          </div>
+        </header>
+        <main><article>
+    <h2>Vercel Edge Functions</h2>
+    <h3>And GitHub OAuth</h3>
+    <p>So recently I've been interested in the idea of adding comments to a static website, without adding introducing any client-side JS. As a part of that, I will be building a PoC using Vercel's edge functions to add GitHub auth to a barebone <code>11ty/eleventy</code> site.</p>
+<h2 id="heading-useful-links">Useful links</h2>
+<ul>
+<li><p><a target="_blank" href="https://vercel.com/docs/concepts/functions/edge-functions">https://vercel.com/docs/concepts/functions/edge-functions</a></p>
+</li>
+<li><p><a target="_blank" href="https://docs.github.com/en/developers/apps/building-oauth-apps">https://docs.github.com/en/developers/apps/building-oauth-apps</a></p>
+</li>
+<li><p><a target="_blank" href="https://www.11ty.dev/#quick-start">https://www.11ty.dev/#quick-start</a></p>
+</li>
+<li><p><a target="_blank" href="https://www.cloudflare.com/en-gb/learning/serverless/glossary/what-is-edge-computing/">Cloudflare - What is edge computing?</a></p>
+</li>
+</ul>
+<h2 id="heading-a-little-about-serverless-andor-edge-computing">A little about serverless and/or edge computing</h2>
+<p>Serverless computing allows us to build things by quickly leveraging "the cloud" benefits, without having to handle any of the menial tasks such as configuring a VPS. Edge computing has a focus on bringing computation closer to data sources, speeding things up by reducing latency. By bringing serverless and edge together, we can leverage the cloud for more performance at a lower cost.</p>
+<h2 id="heading-init">Init</h2>
+<p>This is my first time using the <a target="_blank" href="https://vercel.com/docs/cli"><code>vercel</code> CLI tool</a> to start a project, previously I linked my GitHub repo to a project within the Vercel dashboard.</p>
+<pre><code class="lang-bash">matt@Matthews-MacBook-Air Repositories % vercel init eleventy vercel-edge-function-github-oauth-app
+Vercel CLI 28.15.0
+&gt; Success! Initialized <span class="hljs-string">"eleventy"</span> example <span class="hljs-keyword">in</span> ~/Repositories/vercel-edge-function-github-oauth-app.
+- To deploy, `<span class="hljs-built_in">cd</span> vercel-edge-function-github-oauth-app` and run `vercel`.
+matt@Matthews-MacBook-Air Repositories % <span class="hljs-built_in">cd</span> vercel-edge-function-github-oauth-app
+matt@Matthews-MacBook-Air vercel-edge-function-github-oauth-app % yarn install
+yarn install v1.22.19
+[1/4] 🔍  Resolving packages...
+[2/4] 🚚  Fetching packages...
+[3/4] 🔗  Linking dependencies...
+warning <span class="hljs-string">" &gt; markdown-it-anchor@8.4.1"</span> has unmet peer dependency <span class="hljs-string">"@types/markdown-it@*"</span>.
+[4/4] 🔨  Building fresh packages...
+✨  Done <span class="hljs-keyword">in</span> 10.12s.
+matt@Matthews-MacBook-Air vercel-edge-function-github-oauth-app % npx @11ty/eleventy --serve
+[11ty] Writing _site/LICENSE/index.html from ./LICENSE.md (njk)
+[11ty] Writing _site/sitemap.xml from ./sitemap.xml.njk
+[11ty] Writing _site/feed/.htaccess from ./feed/htaccess.njk
+[11ty] Writing _site/feed/feed.xml from ./feed/feed.njk
+[11ty] Writing _site/feed/feed.json from ./feed/json.njk
+[11ty] Writing _site/posts/fourthpost/index.html from ./posts/fourthpost.md (njk)
+[11ty] Writing _site/404.html from ./404.md (njk)
+[11ty] Writing _site/posts/secondpost/index.html from ./posts/secondpost.md (njk)
+[11ty] Writing _site/posts/thirdpost/index.html from ./posts/thirdpost.md (njk)
+[11ty] Writing _site/posts/firstpost/index.html from ./posts/firstpost.md (njk)
+[11ty] Writing _site/about/index.html from ./about/index.md (njk)
+[11ty] Writing _site/tags/index.html from ./tags-list.njk
+[11ty] Writing _site/tags/second-tag/index.html from ./tags.njk
+[11ty] Writing _site/tags/number-2/index.html from ./tags.njk
+[11ty] Writing _site/tags/posts-with-two-tags/index.html from ./tags.njk
+[11ty] Writing _site/tags/another-tag/index.html from ./tags.njk
+[11ty] Writing _site/page-list/index.html from ./page-list.njk
+[11ty] Writing _site/posts/index.html from ./archive.njk
+[11ty] Writing _site/index.html from ./index.njk
+[11ty] Copied 3 files / Wrote 19 files <span class="hljs-keyword">in</span> 0.25 seconds (13.2ms each, v1.0.0)
+[11ty] Watching…
+[Browsersync] Access URLs:
+ ------------------------------------
+    Local: http://localhost:8081
+ External: http://192.168.88.153:8081
+ ------------------------------------
+[Browsersync] Serving files from: _site
+</code></pre>
+<p><img src="https://cdn.hashnode.com/res/hashnode/image/upload/v1681228878874/fcca87de-3385-41b0-8f61-f72999e2e733.png" alt="Serving the barebones 11ty project locally" class="image--center mx-auto" /></p>
+<p>This can be deployed to the cloud straight away, run the <code>vercel</code> cmd from the project dir, this will start a dialog to configure the project for use in Vercel:</p>
+<pre><code class="lang-bash">matt@Matthews-MacBook-Air vercel-edge-function-github-oauth-app % vercel
+Vercel CLI 28.15.0
+? Set up and deploy “~/Repositories/vercel-edge-function-github-oauth-app”? [Y/n] y
+? Which scope <span class="hljs-keyword">do</span> you want to deploy to? Matthew Murray
+? Link to existing project? [y/N] n
+? What’s your project’s name? vercel-edge-function-github-oauth-app
+? In <span class="hljs-built_in">which</span> directory is your code located? ./
+Local settings detected <span class="hljs-keyword">in</span> vercel.json:
+Auto-detected Project Settings (Eleventy):
+- Build Command: npx @11ty/eleventy
+- Development Command: npx @11ty/eleventy --serve --watch --port <span class="hljs-variable">$PORT</span>
+- Install Command: `yarn install`, `pnpm install`, or `npm install`
+- Output Directory: _site
+? Want to modify these settings? [y/N] n
+🔗  Linked to mattmurr/vercel-edge-function-github-oauth-app (created .vercel)
+🔍  Inspect: https://vercel.com/mattmurr/vercel-edge-function-github-oauth-app/3RrK3NTruee6UJ97GnsJHc5zCaH2 [2s]
+✅  Production: https://vercel-edge-function-github-oauth-app.vercel.app [16s]
+📝  Deployed to production. Run `vercel --prod` to overwrite later (https://vercel.link/2F).
+💡  To change the domain or build <span class="hljs-built_in">command</span>, go to https://vercel.com/mattmurr/vercel-edge-function-github-oauth-app/settings
+</code></pre>
+<p>The project shows up in my Vercel dashboard and has already been built and deployed 🔥🚀.</p>
+<h2 id="heading-vercel-edge-function">Vercel Edge Function</h2>
+<p>The <a target="_blank" href="https://vercel.com/docs/concepts/functions/edge-functions">Edge Functions Overview</a> contains a sample edge function which I added to <code>/api/test.ts</code>, only changing the region to something more local to me:</p>
+<pre><code class="lang-ts"><span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> config = {
+  runtime: <span class="hljs-string">"edge"</span>,
+  regions: [<span class="hljs-string">"lhr1"</span>],
+};
+
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> (req: Request) =&gt; {
+  <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> Response(<span class="hljs-string">`Hello, from <span class="hljs-subst">${req.url}</span> I'm now an Edge Function!`</span>);
+};
+</code></pre>
+<p>Run the <code>vercel</code> cmd once again to deploy the project. Vercel finds the edge function in our project and includes it in the deployment, using the relative path to the file, as the path for the API route:</p>
+<p><img src="https://cdn.hashnode.com/res/hashnode/image/upload/v1681229153856/1a086d91-32fd-426e-a365-5b5f9b5a75e2.png" alt="Testing the sample edge function" class="image--center mx-auto" /></p>
+<p>Successfully created and deployed the edge function. Now to apply these learnings to implement an OAuth login flow.</p>
+<h2 id="heading-oauth-application">OAuth application</h2>
+<p>Let's create a New OAuth App in GitHub:</p>
+<p><img src="https://cdn.hashnode.com/res/hashnode/image/upload/v1681229372778/176b8c56-0fa0-4c5b-ae1f-3aa5bafebf2f.png" alt="GitHub Register a new OAuth application" class="image--center mx-auto" /></p>
+<p>After clicking <strong>Register application</strong>, You'll be presented with the dashboard for the new OAuth application. We need the client ID, and to generate a client secret. They will be accessed from the edge function as <a target="_blank" href="https://vercel.com/docs/concepts/functions/edge-functions/edge-functions-api#environment-variables">environment variables</a>, which can be updated using the <code>vercel</code> CLI tool:</p>
+<pre><code class="lang-bash">matt@Matthews-MacBook-Air vercel-edge-function-github-oauth-app % vercel env add GITHUB_CLIENT_ID production
+Vercel CLI 28.15.0
+? What’s the value of GITHUB_CLIENT_ID? 7d08dc9eed8257580669
+✅  Added Environment Variable GITHUB_CLIENT_ID to Project vercel-edge-function-github-oauth-app [594ms]
+matt@Matthews-MacBook-Air vercel-edge-function-github-oauth-app % vercel env add GITHUB_CLIENT_SECRET production
+Vercel CLI 28.15.0
+? What’s the value of GITHUB_CLIENT_SECRET? &lt;That juicy secret that you generated&gt;
+✅  Added Environment Variable GITHUB_CLIENT_SECRET to Project vercel-edge-function-github-oauth-app [581ms]
+</code></pre>
+<p>Those env vars should now be available in the edge function via <code>process.env</code>.</p>
+<p>According to the GitHub documentation for <a target="_blank" href="https://docs.github.com/en/developers/apps/building-oauth-apps/authorizing-oauth-apps">Authorizing OAuth Apps</a>, we need to:</p>
+<ol>
+<li><p>Request the GitHub identity with a GET to <code>https://github.com/login/oauth/authorize</code>, with the <code>client_id</code> sent in a query parameter.</p>
+</li>
+<li><p>The user will be sent back to the callback page with <code>code</code> request parameter, parse this and make a request to <code>https://github.com/login/oauth/access_token</code> with <code>client_id</code>, <code>client_secret</code> and <code>code</code> params, from which the response should contain our GitHub access token.</p>
+</li>
+</ol>
+<h3 id="heading-1-authorizing-the-oauth-app">#1 Authorizing the OAuth app</h3>
+<p>The <code>/auth/login</code> endpoint redirects any requests destined for <a target="_blank" href="https://vercel-edge-function-github-oauth-app-mattmurr.vercel.app/"><code>https://vercel-edge-function-github-oauth-app-mattmurr.vercel.app/api/auth/login</code></a> towards the GitHub OAuth portal, where the user can sign in and authorize the OAuth app.</p>
+<p>Just like the sample edge function, this is placed in <code>/api/auth/login.ts</code>:</p>
+<pre><code class="lang-ts"><span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> config = {
+  runtime: <span class="hljs-string">"edge"</span>,
+  regions: [<span class="hljs-string">"lhr1"</span>],
+};
+
+<span class="hljs-comment">// Redirect to GitHub auth</span>
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> (req: Request) =&gt; {
+  <span class="hljs-keyword">const</span> AUTH_URL = <span class="hljs-string">"https://github.com/login/oauth/authorize"</span>;
+
+  <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> Response(<span class="hljs-literal">null</span>, {
+    status: <span class="hljs-number">302</span>,
+    headers: {
+      Location: <span class="hljs-string">`<span class="hljs-subst">${AUTH_URL}</span>?client_id=<span class="hljs-subst">${process.env.GITHUB_CLIENT_ID}</span>`</span>,
+    },
+  });
+};
+</code></pre>
+<h3 id="heading-2-retrieving-a-token">#2 Retrieving a token</h3>
+<p>After signing in, the user will be sent back to the callback page that is configured in the GitHub OAuth App dashboard, in my case: <a target="_blank" href="https://vercel-edge-function-github-oauth-app-mattmurr.vercel.app/api/auth/callback"><code>https://vercel-edge-function-github-oauth-app-mattmurr.vercel.app/api/auth/callback</code></a>. This snippet will parse the <code>code</code> request parameter and make a POST to <code>https://github.com/login/oauth/access_token</code> with the <code>client_id</code>, <code>client_secret</code> and <code>code</code> (that was just received).</p>
+<pre><code class="lang-ts"><span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> config = {
+  runtime: <span class="hljs-string">"edge"</span>,
+  regions: [<span class="hljs-string">"lhr1"</span>],
+};
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">cookie</span>(<span class="hljs-params">key: <span class="hljs-built_in">string</span>, value: <span class="hljs-built_in">string</span>, exp: <span class="hljs-built_in">number</span></span>) </span>{
+  <span class="hljs-keyword">return</span> <span class="hljs-string">`<span class="hljs-subst">${key}</span>=<span class="hljs-subst">${value}</span>; HttpOnly; Secure; Max-Age=<span class="hljs-subst">${exp}</span>; SameSite=Lax`</span>;
+}
+
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> <span class="hljs-keyword">async</span> (req: Request) =&gt; {
+  <span class="hljs-keyword">const</span> AUTH_URL = <span class="hljs-string">"https://github.com/login/oauth/access_token"</span>;
+
+  <span class="hljs-comment">// 1. Parse the request URL to retrieve the `code` request parameter</span>
+  <span class="hljs-keyword">const</span> params = <span class="hljs-keyword">new</span> URL(req.url).searchParams;
+  <span class="hljs-keyword">const</span> code = params.get(<span class="hljs-string">"code"</span>)!;
+
+  <span class="hljs-comment">// 2. Sent a POST request to obtain an access_token</span>
+  <span class="hljs-keyword">let</span> url = <span class="hljs-keyword">new</span> URL(AUTH_URL);
+  url.searchParams.set(<span class="hljs-string">"client_id"</span>, process.env.GITHUB_CLIENT_ID);
+  url.searchParams.set(<span class="hljs-string">"client_secret"</span>, process.env.GITHUB_CLIENT_SECRET);
+  url.searchParams.set(<span class="hljs-string">"code"</span>, code);
+
+  <span class="hljs-keyword">const</span> resp = <span class="hljs-keyword">await</span> fetch(url);
+  <span class="hljs-keyword">const</span> body = <span class="hljs-keyword">await</span> resp.text();
+  <span class="hljs-keyword">const</span> access_token = <span class="hljs-keyword">new</span> URLSearchParams(body).get(<span class="hljs-string">"access_token"</span>)!;
+
+  <span class="hljs-comment">// 3. Store the auth token as a cookie</span>
+  <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> Response(<span class="hljs-literal">null</span>, {
+    status: <span class="hljs-number">302</span>,
+    headers: {
+      <span class="hljs-string">"Cache-Control"</span>: <span class="hljs-string">"no-cache"</span>,
+      <span class="hljs-string">"Set-Cookie"</span>: cookie(<span class="hljs-string">"gh_auth_token"</span>, btoa(access_token), <span class="hljs-number">60</span> * <span class="hljs-number">60</span> * <span class="hljs-number">8</span>), <span class="hljs-comment">// 8 Hours</span>
+    },
+  });
+};
+</code></pre>
+<p>Encoding <code>access_token</code> in base64 and storing it in a cookie <code>gh_auth_token</code>. When I redeploy, and navigate to <a target="_blank" href="https://vercel-edge-function-github-oauth-app-mattmurr.vercel.app/api/auth/login">/api/auth/login</a>, I should be presented with the GitHub authorize OAuth application screen. Shortly after, an access token should be stored in a cookie, ready to be used in subsequent requests to GitHub APIs.</p>
+<p><img src="https://cdn.hashnode.com/res/hashnode/image/upload/v1681230120858/e1bf4f2f-eb63-4171-aa64-489c85677618.png" alt="gh_auth_token cookie in browser developer tools" class="image--center mx-auto" /></p>
+<h2 id="heading-using-the-token">Using the token</h2>
+<p>I'll add another edge function <code>/api/user</code> which will retrieve information about the user, <strong>myself,</strong> since I'm logging in with my own GitHub account. Here's my first naive attempt:</p>
+<pre><code class="lang-ts"><span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> <span class="hljs-keyword">async</span> (req: Request) =&gt; {
+  <span class="hljs-keyword">const</span> USER_URL = <span class="hljs-string">"https://api.github.com/user"</span>;
+
+  <span class="hljs-keyword">const</span> cookies = req.headers.get(<span class="hljs-string">"cookie"</span>)!;
+  <span class="hljs-keyword">const</span> access_token = atob(
+    cookies
+      .split(<span class="hljs-string">"; "</span>)
+      .filter(<span class="hljs-function">(<span class="hljs-params">value: <span class="hljs-built_in">string</span></span>) =&gt;</span> value.startsWith(<span class="hljs-string">"gh_auth_token"</span>))[<span class="hljs-number">0</span>]
+      .split(<span class="hljs-string">"="</span>)[<span class="hljs-number">1</span>]
+  );
+
+  <span class="hljs-keyword">const</span> resp = <span class="hljs-keyword">await</span> fetch(USER_URL, {
+    headers: {
+      Authorization: <span class="hljs-string">`Bearer <span class="hljs-subst">${access_token}</span>`</span>,
+    },
+  });
+  <span class="hljs-keyword">const</span> { login, avatar_url } = <span class="hljs-keyword">await</span> resp.json();
+
+  <span class="hljs-keyword">const</span> render = <span class="hljs-string">`&lt;!DOCTYPE html&gt;&lt;html&gt;&lt;head&gt;&lt;/head&gt;&lt;body&gt;&lt;h1&gt;<span class="hljs-subst">${login}</span>&lt;/h1&gt;&lt;img src="<span class="hljs-subst">${avatar_url}</span>" width="250" height="250"&gt;&lt;/body&gt;&lt;/html&gt;`</span>;
+  <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> Response(render, {
+    headers: {
+      <span class="hljs-string">"Content-Type"</span>: <span class="hljs-string">"text/html; charset=utf-8"</span>,
+    },
+  });
+};
+</code></pre>
+<p>I found that the <code>gh_auth_token</code> cookie isn't set when I use the new <a target="_blank" href="https://vercel-edge-function-github-oauth-app-mattmurr.vercel.app/api/auth/login">/api/user</a> endpoint. This is because of the <code>Path</code> attribute. By default, the cookie is only visible at the <code>/auth/callback</code> path. The following change makes sure that this is instead set as the root of our site, <code>/api/auth/callback.ts</code>:</p>
+<pre><code class="lang-ts"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">cookie</span>(<span class="hljs-params">key: <span class="hljs-built_in">string</span>, value: <span class="hljs-built_in">string</span>, exp: <span class="hljs-built_in">number</span></span>) </span>{
+  <span class="hljs-comment">// return `${key}=${value}; HttpOnly; Secure; Max-Age=${exp}; SameSite=Lax;`;</span>
+  <span class="hljs-keyword">return</span> <span class="hljs-string">`<span class="hljs-subst">${key}</span>=<span class="hljs-subst">${value}</span>; HttpOnly; Secure; Max-Age=<span class="hljs-subst">${exp}</span>; SameSite=Lax; Path=/`</span>;
+}
+</code></pre>
+<p>Now when I go through the entire login flow, and navigate to the <code>/api/user</code> path, I am presented with my username and profile pic.</p>
+<p><img src="https://cdn.hashnode.com/res/hashnode/image/upload/v1681230851080/7f9a5a35-8895-4caa-b689-aa66c686028a.png" alt class="image--center mx-auto" /></p>
+<p>If you have been following along, you can make this what you want. For example, a reimplementation of the GitHub search bar to find GitHub users and/or repositories.</p>
+<p>I'm happy with the result, it's blazing quick and extremely simple to implement. I will be using edge functions in future projects whenever possible, to grasp the pros and discover limitations in edge computing.</p>
+
+  </article></main>
+        <footer>&copy; 2021-2024 Matthew Murray</footer>
+      </body>
+    </html>
