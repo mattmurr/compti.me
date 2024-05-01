@@ -4,9 +4,10 @@ exports.data = {
   layout: "base",
 };
 
-exports.render = ({ site, title, page, content }) => {
+exports.render = ({ post }) => {
   return html`<article>
-    <h2>${title}</h2>
-    ${content}
+    <h2>${post.title}</h2>
+    <h3>${post.subtitle}</h3>
+    ${post.content.html}
   </article>`;
 };

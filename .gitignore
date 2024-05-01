@@ -4,3 +4,5 @@ _site/
 node_modules
 .DS_Store
 .vercel
+.env
+.cache
